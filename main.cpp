@@ -10,15 +10,15 @@ const int SCREEN_HEIGHT = 144;
 
 
 //The gWindow we'll be rendering to
-SDL_Window* gWindow = NULL;
+SDL_Window* gWindow = nullptr;
 
 //The surface contained by the gWindow
-SDL_Surface* gScreenSurface = NULL;
+SDL_Surface* gScreenSurface = nullptr;
 
 //The image we will load and show on the screen
-SDL_Surface* gXOut = NULL;
+SDL_Renderer* renderer = nullptr;
 
-bool init() {
+bool init(bool accelerated) {
     //Initialize SDL
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
     {
@@ -29,19 +29,29 @@ bool init() {
 
     //Create gWindow
     gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-    if( gWindow == NULL )
+    if( gWindow == nullptr )
     {
         cout << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
         return false;
-    } else {
-        //Get gWindow surface
-        gScreenSurface = SDL_GetWindowSurface( gWindow );
-        return true;
     }
 
+    //Get gWindow surface
+    // gScreenSurface = SDL_GetWindowSurface( gWindow );
+
+    renderer = SDL_CreateRenderer(gWindow, -1, accelerated ? SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC : SDL_RENDERER_SOFTWARE);
+    if( renderer == nullptr )
+    {
+        cout << "SDL_CreateRenderer error! SDL_Error: " << SDL_GetError() << endl;
+        return false;
+    }
+
+    return true;
 }
 
 void destroy() {
+    // Destroy Renderer
+    SDL_DestroyRenderer(renderer);
+
     //Destroy gWindow
     SDL_DestroyWindow( gWindow );
 
@@ -51,7 +61,7 @@ void destroy() {
 
 int main(int argc, char *argv[]) {
 
-    if (!init()) {
+    if (!init(argc > 1)) {
         return EXIT_FAILURE;
     }
 
@@ -65,9 +75,15 @@ int main(int argc, char *argv[]) {
     start = chrono::system_clock::now();
     unsigned i = 0, fpsCount = 0;
 
+    // Rect
+    SDL_Rect rect;
+    rect.w = SCREEN_WIDTH;
+    rect.h = SCREEN_HEIGHT;
+    rect.x = rect.y = 0;
+
     while (!ready) {
 
-        //Fill the surface white
+        /*//Fill the surface white
         SDL_FillRect( gScreenSurface, NULL, SDL_MapRGB( gScreenSurface->format, (i >> 10) & 0xFF, (i >> 8) & 0xFF, (i >> 8) & 0xFF ) );
         ++i;
         SDL_LockSurface(gScreenSurface);
@@ -77,7 +93,17 @@ int main(int argc, char *argv[]) {
         //++i;
 
         //Update the surface
-        SDL_UpdateWindowSurface( gWindow );
+        SDL_UpdateWindowSurface( gWindow );*/
+
+        // SDL2
+        //SDL_SetRenderDrawColor(renderer, 144,0,0, 0xFF);
+        //SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, (i >> 10) & 0xFF, (i >> 8) & 0xFF, (i >> 0) & 0xFF , 0xFF);
+        SDL_RenderFillRect(renderer, &rect);
+        //SDL_RenderDrawRect(renderer, &rect);
+        SDL_RenderPresent(renderer);
+        ++i;
+
 
         //Wait two seconds
         //SDL_Delay( 2000 );
