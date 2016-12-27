@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include "SDL.h"
 
 using namespace std;
@@ -60,7 +61,9 @@ int main(int argc, char *argv[]) {
     //Event handler
     SDL_Event e;
 
-    unsigned i = 0;
+    chrono::time_point<chrono::system_clock> start, end;
+    start = chrono::system_clock::now();
+    unsigned i = 0, fpsCount = 0;
 
     while (!ready) {
 
@@ -103,6 +106,17 @@ int main(int argc, char *argv[]) {
                         break;
                 }
             }
+        }
+
+
+        // Timer
+        ++fpsCount;
+        end = chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        if (elapsed_seconds.count() >= 1.0) {
+            start = chrono::system_clock::now();
+            cout << "FPS: " << fpsCount << endl;
+            fpsCount = 0;
         }
     }
 
