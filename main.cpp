@@ -20,17 +20,30 @@ SDL_Renderer* renderer = nullptr;
 
 SDL_Texture* texture = nullptr;
 
+uint32_t pixelBuffer[SCREEN_WIDTH][SCREEN_HEIGHT] = {};
+
+
 bool init(bool accelerated) {
     //Initialize SDL
-    if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+    if( SDL_Init( 0 ) != 0 )
     {
         cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << endl;
         return false;
     }
 
+    // Init video subsystem
+    if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
+        cout << "Video Already initialised" << endl;
+    } else {
+        cout << "Video Not Initialised, initialising video" << endl;
+        if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+            cout << "Could not initialise SDL Video subsystem" << endl;
+            return false;
+        }
+    }
 
     //Create gWindow
-    gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+    gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN /*| SDL_WINDOW_RESIZABLE*/);
     if( gWindow == nullptr )
     {
         cout << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
@@ -66,6 +79,9 @@ void destroy() {
 
     //Destroy gWindow
     SDL_DestroyWindow( gWindow );
+
+    // Quit SDL Video Subsystem
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
     //Quit SDL subsystems
     SDL_Quit();
@@ -117,10 +133,17 @@ int main(int argc, char *argv[]) {
         //SDL_SetRenderDrawColor(renderer, (i >> 10) & 0xFF, (i >> 8) & 0xFF, (i >> 0) & 0xFF , 0xFF);
         //SDL_RenderFillRect(renderer, &rect);
 
-        uint8_t * pixels = nullptr; int pitch = 0;
+        /* Method 1 - recommended */
+        pixelBuffer[20][20] = 0xFF000000 | i;
+        SDL_UpdateTexture(texture, nullptr, pixelBuffer, SCREEN_WIDTH * sizeof(uint32_t));
+
+        /* Method 2 - less recommended, faster */
+        /*uint8_t * pixels = nullptr; int pitch = 0;
         SDL_LockTexture(texture, nullptr, (void**)&pixels, &pitch);
+        // cout << (void*)pixels << endl;
         *(uint32_t*)(pixels + (20 * pitch + 79 * sizeof(uint32_t))) = 0xFF000000 | i;
-        SDL_UnlockTexture(texture);
+        SDL_UnlockTexture(texture);*/
+
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 
         SDL_RenderPresent(renderer);
