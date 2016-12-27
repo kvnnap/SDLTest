@@ -13,10 +13,12 @@ const int SCREEN_HEIGHT = 144;
 SDL_Window* gWindow = nullptr;
 
 //The surface contained by the gWindow
-SDL_Surface* gScreenSurface = nullptr;
+// SDL_Surface* gScreenSurface = nullptr;
 
 //The image we will load and show on the screen
 SDL_Renderer* renderer = nullptr;
+
+SDL_Texture* texture = nullptr;
 
 bool init(bool accelerated) {
     //Initialize SDL
@@ -45,10 +47,20 @@ bool init(bool accelerated) {
         return false;
     }
 
+    // Main texture
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+    if (texture == nullptr) {
+        cout << "SDL_CreateTexture error! SDL_Error: " << SDL_GetError() << endl;
+        return false;
+    }
+
     return true;
 }
 
 void destroy() {
+    // Destroy Texture
+    SDL_DestroyTexture(texture);
+
     // Destroy Renderer
     SDL_DestroyRenderer(renderer);
 
@@ -76,10 +88,13 @@ int main(int argc, char *argv[]) {
     unsigned i = 0, fpsCount = 0;
 
     // Rect
-    SDL_Rect rect;
+    SDL_Rect rect, textureRect;
     rect.w = SCREEN_WIDTH;
     rect.h = SCREEN_HEIGHT;
     rect.x = rect.y = 0;
+    textureRect = rect;
+    textureRect.w /= 2;
+    textureRect.h /= 2;
 
     while (!ready) {
 
@@ -98,9 +113,16 @@ int main(int argc, char *argv[]) {
         // SDL2
         //SDL_SetRenderDrawColor(renderer, 144,0,0, 0xFF);
         //SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, (i >> 10) & 0xFF, (i >> 8) & 0xFF, (i >> 0) & 0xFF , 0xFF);
-        SDL_RenderFillRect(renderer, &rect);
-        //SDL_RenderDrawRect(renderer, &rect);
+
+        //SDL_SetRenderDrawColor(renderer, (i >> 10) & 0xFF, (i >> 8) & 0xFF, (i >> 0) & 0xFF , 0xFF);
+        //SDL_RenderFillRect(renderer, &rect);
+
+        uint8_t * pixels = nullptr; int pitch = 0;
+        SDL_LockTexture(texture, nullptr, (void**)&pixels, &pitch);
+        *(uint32_t*)(pixels + (20 * pitch + 79 * sizeof(uint32_t))) = 0xFF000000 | i;
+        SDL_UnlockTexture(texture);
+        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+
         SDL_RenderPresent(renderer);
         ++i;
 
